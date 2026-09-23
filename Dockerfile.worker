@@ -1,0 +1,32 @@
+# Добавляем платформу сборщика (по умолчанию)
+FROM --platform=$BUILDPLATFORM golang:alpine AS builder
+
+ENV GOTOOLCHAIN=auto
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+# 1. Объявляем переменные, которые Docker передаст автоматически
+ARG TARGETOS
+ARG TARGETARCH
+
+# 2. Используем их в команде сборки вместо жестко прописанного amd64
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -ldflags="-s -w" -o /app/bin/worker ./cmd/worker
+
+FROM alpine:3.20
+
+RUN apk --no-cache add ca-certificates tzdata
+
+WORKDIR /app
+
+COPY --from=builder /app/bin/worker ./worker
+
+RUN chmod +x ./worker
+
+EXPOSE 8889
+
+CMD ["./worker"]

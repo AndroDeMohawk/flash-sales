@@ -1,0 +1,26 @@
+FROM golang:alpine AS builder
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /app/bin/api ./cmd/api
+
+FROM alpine:3.20
+
+RUN apk --no-cache add ca-certificates tzdata
+
+WORKDIR /app
+
+# Явно копируем бинарник с именем ./api
+COPY --from=builder /app/bin/api ./api
+
+# Выдаем права на выполнение
+RUN chmod +x ./api
+
+EXPOSE 8888
+
+CMD ["./api"]

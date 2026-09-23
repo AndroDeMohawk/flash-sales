@@ -47,3 +47,12 @@ func (r *StockRepository) ReserveStock(ctx context.Context, ticketID int64, quan
 		return res, nil // Возвращает новый остаток
 	}
 }
+func (r *StockRepository) RestoreStock(ctx context.Context, ticketID int64, quantity int) error {
+	key := fmt.Sprintf("ticket:%d:stock", ticketID)
+
+	if err := r.client.IncrBy(ctx, key, int64(quantity)).Err(); err != nil {
+		return fmt.Errorf("failed to restore stock in redis: %w", err)
+	}
+
+	return nil
+}

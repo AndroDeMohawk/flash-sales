@@ -26,18 +26,18 @@ func NewOrderConsumer(brokers []string, topic, groupID string) *OrderConsumer {
 	}
 }
 
-func (c *OrderConsumer) FetchMessage(ctx context.Context) (error, kafka.Message) {
+func (c *OrderConsumer) FetchMessage(ctx context.Context) (kafka.Message, error) {
 	msg, err := c.reader.FetchMessage(ctx)
 	if err != nil {
-		return fmt.Errorf("FetchMessage: %w", err), kafka.Message{}
+		return kafka.Message{}, fmt.Errorf("FetchMessage: %w", err)
 	}
-	return nil, msg
+	return msg, nil
 
 }
 
 func (c *OrderConsumer) CommitMessage(ctx context.Context, msg kafka.Message) error {
 	if err := c.reader.CommitMessages(ctx, msg); err != nil {
-		return fmt.Errorf("Error to commit message %w", err)
+		return fmt.Errorf("error to commit message %w", err)
 	}
 	return nil
 }
