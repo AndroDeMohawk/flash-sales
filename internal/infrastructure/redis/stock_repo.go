@@ -32,7 +32,6 @@ func NewStockRepository(client *redis.Client) *StockRepository {
 func (r *StockRepository) ReserveStock(ctx context.Context, ticketID int64, quantity int) (int64, error) {
 	key := fmt.Sprintf("ticket:%d:stock", ticketID)
 
-	// Выполняем Lua-скрипт в Redis
 	res, err := r.script.Run(ctx, r.client, []string{key}, quantity).Int64()
 	if err != nil {
 		return 0, fmt.Errorf("redis lua execution error: %w", err)
@@ -44,7 +43,8 @@ func (r *StockRepository) ReserveStock(ctx context.Context, ticketID int64, quan
 	case -2:
 		return 0, ErrSoldOut
 	default:
-		return res, nil // Возвращает новый остаток
+		// res >= 0 — это реальный остаток билетов после списания (включая 0, когда забрали последний)
+		return res, nil
 	}
 }
 func (r *StockRepository) RestoreStock(ctx context.Context, ticketID int64, quantity int) error {

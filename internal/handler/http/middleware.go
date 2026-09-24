@@ -12,7 +12,7 @@ const UserIdCtxKey contextKey = "userID"
 
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		UserIDStr := r.Header.Get("X-User-Id")
+		UserIDStr := r.Header.Get("X-User-ID")
 		if UserIDStr == "" {
 			http.Error(w, "Missing X-User-Id header", http.StatusUnauthorized)
 			return

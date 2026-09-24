@@ -37,22 +37,26 @@ type CreateOrderResponse struct {
 
 // CreateOrder — POST /api/v1/orders
 func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
-	userId, ok := r.Context().Value("UserIdCtxKey").(int64)
+	// 1. Извлекаем userID с использованием той же константы UserIdCtxKey
+	userId, ok := r.Context().Value(UserIdCtxKey).(int64)
 	if !ok {
 		http.Error(w, "Missing UserID", http.StatusBadRequest)
 		return
 	}
+
 	var req CreateOrderRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid request payload", http.StatusBadRequest)
 		return
 	}
 
-	if req.UserID <= 0 || req.TicketID <= 0 || req.Quantity <= 0 {
-		http.Error(w, "user_id, ticket_id and quantity must be positive", http.StatusBadRequest)
+	// 2. Валидируем только билеты и количество, так как userId уже взят из контекста
+	if req.TicketID <= 0 || req.Quantity <= 0 {
+		http.Error(w, "ticket_id and quantity must be positive", http.StatusBadRequest)
 		return
 	}
 
+	// 3. Вызываем usecase
 	orderID, err := h.orderUC.CreateOrder(r.Context(), userId, req.TicketID, req.Quantity)
 	if err != nil {
 		if errors.Is(err, redis.ErrSoldOut) {
